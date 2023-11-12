@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+import os
+import sys
+import torch
+from diffusers import AutoPipelineForText2Image, LCMScheduler
+
+# append project directory to path so predict.py can be imported
+sys.path.append('.')
+
+from predict import MODEL_NAME, MODEL_CACHE, ADAPTER_ID, ADAPTER_CACHE
+
+# Make cache folder
+if not os.path.exists(MODEL_CACHE):
+    os.makedirs(MODEL_CACHE)
+
+pipe = AutoPipelineForText2Image.from_pretrained(
+    MODEL_NAME,
+    cache_dir=MODEL_CACHE,
+    torch_dtype=torch.float16,
+    variant="fp16"     
+)
+pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config)
+pipe.load_lora_weights(ADAPTER_ID, cache_dir=ADAPTER_CACHE)
+pipe.fuse_lora()
